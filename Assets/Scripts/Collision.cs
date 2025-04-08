@@ -3,25 +3,28 @@ using UnityEngine;
 public class Collision : MonoBehaviour
 {
     [SerializeField] LayerMask groundLayer;
-    [SerializeField] bool onGround;
-    [SerializeField] bool onWall;
-
+    public bool onGround;
+    public bool onWall;
+    public bool onRightWall;
+    public bool onLeftWall;
     public float collisionRadius = 0.25f;
     public Vector2 bottomOffset, rightOffset, leftOffset; // 3 variaveis em 1 linha
 
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    void Awake()
     {
-        
+
     }
 
-    // Update is called once per frame
     void Update()
     {
         onGround = Physics2D.OverlapCircle((Vector2)transform.position + bottomOffset, collisionRadius, groundLayer);
         onWall = Physics2D.OverlapCircle((Vector2)transform.position + rightOffset, collisionRadius, groundLayer)
             || Physics2D.OverlapCircle((Vector2)transform.position + leftOffset, collisionRadius, groundLayer);
+        
+        onRightWall = Physics2D.OverlapCircle((Vector2)transform.position + rightOffset, collisionRadius, groundLayer);
+        onLeftWall = Physics2D.OverlapCircle((Vector2)transform.position + leftOffset, collisionRadius, groundLayer);
+
+        
     }
 
     void OnDrawGizmos() 
