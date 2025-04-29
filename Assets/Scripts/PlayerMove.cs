@@ -1,4 +1,5 @@
 using System.Collections;
+using DG.Tweening;
 using UnityEngine;
 
 public class PlayerMove : MonoBehaviour
@@ -14,12 +15,17 @@ public class PlayerMove : MonoBehaviour
     [SerializeField] float slideSpeed = 6;
     public bool wallGrab;
     public bool canMove;
+    public bool canJump;
     public bool wallSlide;
     public bool wallJumped;
     public bool isDashing;
+    public float dashSpeed = 20;
     float wallJumpLerp = 10;
-
+    public bool hasDashed;
     public int side = 1;
+    public bool groundTouch;
+    public float timeSinceLeftGround;
+    public float wallSlideDelayTime;
 
     void Awake() 
     {
@@ -29,11 +35,13 @@ public class PlayerMove : MonoBehaviour
 
     void Start()
     {
-
+        canJump = true;
     }
 
     void Update()
     {
+
+        Debug.Log(timeSinceLeftGround);
 
         if(rb.linearVelocityY < 0)
         {
@@ -43,6 +51,7 @@ public class PlayerMove : MonoBehaviour
         {
             rb.linearVelocity += Vector2.up * Physics2D.gravity.y * (lowJumpMultiplier - 1) * Time.deltaTime;
         }
+
 
         float x = Input.GetAxis("Horizontal");
         float y = Input.GetAxis("Vertical");
@@ -56,30 +65,41 @@ public class PlayerMove : MonoBehaviour
         // wallGrab = coll.onWall && Input.GetKey(KeyCode.LeftShift);
 
         #region Setting wallGrab and wallSlide
+
         // Se estiver colidindo com a parede e apertando botao de grab ele ativa o grab e para de deslizar na parede
         if(coll.onWall && Input.GetButton("Fire3") && canMove )
         {
-            Debug.Log("Ativou wall grab");
+            // Debug.Log("Ativou wall grab");
             wallGrab = true;
             wallSlide = false;
+            
         }
 
         // se soltar botao de grab ou parar de colidir na parede ele 
         if(Input.GetButtonUp("Fire3") || !coll.onWall || !canMove ) // 
         {
-            Debug.Log("Desativou wall grab");
+            // Debug.Log("Desativou wall grab");
             wallGrab = false;
             wallSlide = false;
         }
         #endregion
 
-        if (coll.onGround /* && !isDashing */ )
+        if (coll.onGround && !isDashing)
         {
             wallJumped = false;
+            canJump = true;
+
+            timeSinceLeftGround = 0f;
+
             // GetComponent<BetterJumping>().enabled = true;
+        
+        }
+        else
+        {
+            timeSinceLeftGround += Time.deltaTime;
         }
 
-        if(wallGrab /* && !isDashing */ )
+        if(wallGrab && !isDashing)
         {
             rb.gravityScale = 0; // tira a gravidade se estou escalando a parede
             if(x > .2f || x < -.2f) // se estou apertando para alguma direcao, tudo abaixo disso sera executado
@@ -95,7 +115,7 @@ public class PlayerMove : MonoBehaviour
             rb.gravityScale = 3;
         }
 
-        if(coll.onWall && !coll.onGround)
+        if(coll.onWall && !coll.onGround && rb.linearVelocityY < -0.1f && timeSinceLeftGround > wallSlideDelayTime)
         {
             if (x != 0 && !wallGrab) // se esta apertando a direção da parede e não escalando, aplica o slide
             {
@@ -105,20 +125,40 @@ public class PlayerMove : MonoBehaviour
 
         }
 
+
         if (!coll.onWall || coll.onGround) // assegurando que o wallSlide vai desativar apos sair da parede ou tocar no chao
         {
             wallSlide = false;
         }
 
+        if (coll.onGround && !groundTouch)
+        {
+            GroundTouch();
+            groundTouch = true;
+        }
+
+        if(!coll.onGround && groundTouch)
+        {
+            groundTouch = false;
+        }
+
         if (Input.GetButtonDown("Jump"))
         {
-            if (coll.onGround){
+            if (coll.onGround && canJump){
                 Jump(Vector2.up, false);
             }
             if (coll.onWall && !coll.onGround){
                 WallJump();
             }
 
+        }
+
+        if (Input.GetButtonDown("Fire1") && !hasDashed)
+        {
+
+            Debug.Log("DASH");
+            if(xRaw != 0 || yRaw != 0)
+                Dash(xRaw, yRaw);
         }
 
         // mexer com particulas, dash e outras coisas
@@ -139,6 +179,15 @@ public class PlayerMove : MonoBehaviour
         }
     }
 
+    void GroundTouch()
+    {
+        hasDashed = false;
+        isDashing = false;
+
+        // side = anim.sr.flipX ? -1 : 1;
+
+        // jumpParticle.Play();
+    }
     void Walk(Vector2 dir)
     {
         if (!canMove){
@@ -154,7 +203,7 @@ public class PlayerMove : MonoBehaviour
         }
         else
         {
-            rb.linearVelocity = Vector2.Lerp(rb.linearVelocity, (new Vector2(dir.x * speed, rb.linearVelocity.y)), wallJumpLerp * Time.deltaTime);
+            rb.linearVelocity = Vector2.Lerp(rb.linearVelocity, new Vector2(dir.x * speed, rb.linearVelocity.y), wallJumpLerp * Time.deltaTime);
         }
         // rb.linearVelocity = new Vector2(dir.x * speed, rb.linearVelocityY);
     }
@@ -191,7 +240,7 @@ public class PlayerMove : MonoBehaviour
         }
 
         StopCoroutine(DisableMovement(0));
-        StartCoroutine(DisableMovement(.1f));
+        StartCoroutine(DisableMovement(.12f));
 
         Vector2 wallDir = coll.onRightWall ? Vector2.left : Vector2.right;
 
@@ -207,6 +256,57 @@ public class PlayerMove : MonoBehaviour
         canMove = true;
     }
 
+    private void Dash(float x, float y)
+    {
+        // Camera.main.transform.DOComplete();
+        // Camera.main.transform.DOShakePosition(.2f, .5f, 14, 90, false, true);
+        // FindObjectOfType<RippleEffect>().Emit(Camera.main.WorldToViewportPoint(transform.position));
+
+        hasDashed = true;
+
+        // anim.SetTrigger("dash");
+
+        rb.linearVelocity = Vector2.zero;
+        Vector2 dir = new Vector2(x, y);
+
+        rb.linearVelocity += dir.normalized * dashSpeed;
+        StartCoroutine(DashWait());
+    }
+
+    IEnumerator DashWait()
+    {
+        // FindObjectOfType<GhostTrail>().ShowGhost();
+        StartCoroutine(GroundDash());
+        DOVirtual.Float(14, 0, .8f, RigidbodyDrag);
+
+        // dashParticle.Play();
+        rb.gravityScale = 0;
+        canJump = false;
+        // GetComponent<BetterJumping>().enabled = false;
+        wallJumped = true;
+        isDashing = true;
+
+        yield return new WaitForSeconds(.4f);
+
+        // dashParticle.Stop();
+        rb.gravityScale = 3;
+        canJump = true;
+        // GetComponent<BetterJumping>().enabled = true;
+        wallJumped = false;
+        isDashing = false;
+    }
+
+    IEnumerator GroundDash()
+    {
+        yield return new WaitForSeconds(.15f);
+        if (coll.onGround)
+            hasDashed = false;
+    }
+
+    void RigidbodyDrag(float x)
+    {
+        rb.linearDamping = x; // 
+    }
     /*
     void OnCollisionEnter2D(Collision2D col)
     {
