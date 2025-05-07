@@ -779,7 +779,7 @@ MonoBehaviour:
   jumpForce: 15
   fallMultiplier: 4
   lowJumpMultiplier: 13
-  slideSpeed: 5
+  slideSpeed: 3
   wallGrab: 0
   canMove: 1
   canJump: 0
@@ -790,8 +790,6 @@ MonoBehaviour:
   hasDashed: 0
   side: 1
   groundTouch: 0
-  timeSinceLeftGround: 0
-  wallSlideDelayTime: 0.3
 --- !u!50 &2014553003
 Rigidbody2D:
   serializedVersion: 5

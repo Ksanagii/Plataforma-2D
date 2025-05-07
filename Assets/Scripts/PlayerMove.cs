@@ -12,7 +12,7 @@ public class PlayerMove : MonoBehaviour
     [SerializeField] float fallMultiplier = 2.5f;
     [SerializeField] float lowJumpMultiplier = 2f;
     Collision coll;
-    [SerializeField] float slideSpeed = 6;
+    [SerializeField] float slideSpeed = 4;
     public bool wallGrab;
     public bool canMove;
     public bool canJump;
@@ -24,8 +24,6 @@ public class PlayerMove : MonoBehaviour
     public bool hasDashed;
     public int side = 1;
     public bool groundTouch;
-    public float timeSinceLeftGround;
-    public float wallSlideDelayTime;
 
     void Awake() 
     {
@@ -40,8 +38,6 @@ public class PlayerMove : MonoBehaviour
 
     void Update()
     {
-
-        Debug.Log(timeSinceLeftGround);
 
         if(rb.linearVelocityY < 0)
         {
@@ -89,14 +85,9 @@ public class PlayerMove : MonoBehaviour
             wallJumped = false;
             canJump = true;
 
-            timeSinceLeftGround = 0f;
 
             // GetComponent<BetterJumping>().enabled = true;
         
-        }
-        else
-        {
-            timeSinceLeftGround += Time.deltaTime;
         }
 
         if(wallGrab && !isDashing)
@@ -115,7 +106,7 @@ public class PlayerMove : MonoBehaviour
             rb.gravityScale = 3;
         }
 
-        if(coll.onWall && !coll.onGround && rb.linearVelocityY < -0.1f && timeSinceLeftGround > wallSlideDelayTime)
+        if(coll.onWall && !coll.onGround)
         {
             if (x != 0 && !wallGrab) // se esta apertando a direção da parede e não escalando, aplica o slide
             {
@@ -205,7 +196,9 @@ public class PlayerMove : MonoBehaviour
         {
             rb.linearVelocity = Vector2.Lerp(rb.linearVelocity, new Vector2(dir.x * speed, rb.linearVelocity.y), wallJumpLerp * Time.deltaTime);
         }
+
         // rb.linearVelocity = new Vector2(dir.x * speed, rb.linearVelocityY);
+
     }
 
     void Jump(Vector2 dir, bool wall)
