@@ -273,6 +273,7 @@ public class PlayerMove : MonoBehaviour
         DOVirtual.Float(14, 0, .8f, RigidbodyDrag);
 
         // dashParticle.Play();
+        // rb.linearVelocityY = 0f;
         rb.gravityScale = 0;
         canJump = false;
         // GetComponent<BetterJumping>().enabled = false;
