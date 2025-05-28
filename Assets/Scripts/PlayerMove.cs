@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerMove : MonoBehaviour
 {
     Rigidbody2D rb;
+    AnimationScript anim;
     [SerializeField] float speed;
 
     [Header("Jump Controller")]
@@ -29,6 +30,7 @@ public class PlayerMove : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         coll = GetComponent<Collision>();
+        anim = GetComponent<AnimationScript>();
     }
 
     void Start()
