@@ -3,7 +3,7 @@ using UnityEngine;
 public class AnimationScript : MonoBehaviour
 {
     Animator anim;
-    PlayerMove playerMove;
+    PlayerMove move;
     Collision coll;
     [HideInInspector] public SpriteRenderer spr;
 
@@ -11,7 +11,7 @@ public class AnimationScript : MonoBehaviour
     void Start()
     {
         anim = GetComponent<Animator>();
-        playerMove = GetComponent<PlayerMove>();
+        move = GetComponent<PlayerMove>();
         coll = GetComponent<Collision>();
         spr = GetComponent<SpriteRenderer>();
     }
@@ -19,7 +19,13 @@ public class AnimationScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        anim.SetBool("onGround", coll.onGround);
+        anim.SetBool("onWall", coll.onWall);
+        anim.SetBool("onRightWall", coll.onRightWall);
+        anim.SetBool("wallGrab", move.wallGrab);
+        anim.SetBool("wallSlide", move.wallSlide);
+        anim.SetBool("canMove", move.canMove);
+        anim.SetBool("isDashing", move.isDashing);
     }
 
     public void SetHorizontalMovement(float x, float y, float yVel)
@@ -27,5 +33,28 @@ public class AnimationScript : MonoBehaviour
         anim.SetFloat("HorizontalAxis", x);
         anim.SetFloat("VerticalAxis", y);
         anim.SetFloat("VerticalVelocity", yVel);
+    }
+
+    public void SetTrigger(string trigger)
+    {
+        anim.SetTrigger(trigger);
+    }
+
+    public void Flip(int side)
+    {
+
+        if (move.wallGrab || move.wallSlide)
+        {
+            if (side == -1 && spr.flipX)
+                return;
+
+            if (side == 1 && !spr.flipX)
+            {
+                return;
+            }
+        }
+
+        bool state = (side == 1) ? false : true;
+        spr.flipX = state;
     }
 }
