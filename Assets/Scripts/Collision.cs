@@ -7,13 +7,10 @@ public class Collision : MonoBehaviour
     public bool onWall;
     public bool onRightWall;
     public bool onLeftWall;
+    public int wallSide;
     public float collisionRadius = 0.25f;
     public Vector2 bottomOffset, rightOffset, leftOffset; // 3 variaveis em 1 linha
 
-    void Awake()
-    {
-
-    }
 
     void Update()
     {
@@ -24,7 +21,7 @@ public class Collision : MonoBehaviour
         onRightWall = Physics2D.OverlapCircle((Vector2)transform.position + rightOffset, collisionRadius, groundLayer);
         onLeftWall = Physics2D.OverlapCircle((Vector2)transform.position + leftOffset, collisionRadius, groundLayer);
 
-        
+        wallSide = onRightWall ? -1 : 1;
     }
 
     void OnDrawGizmos() 

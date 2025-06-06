@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class PlayerMove : MonoBehaviour
 {
-    Rigidbody2D rb;
+    public Rigidbody2D rb;
+    AnimationScript anim;
     [SerializeField] float speed;
 
     [Header("Jump Controller")]
@@ -13,6 +14,7 @@ public class PlayerMove : MonoBehaviour
     [SerializeField] float lowJumpMultiplier = 2f;
     Collision coll;
     [SerializeField] float slideSpeed = 4;
+    [SerializeField] float dashWaitingTime = .4f;
     public bool wallGrab;
     public bool canMove;
     public bool canJump;
@@ -25,16 +27,12 @@ public class PlayerMove : MonoBehaviour
     public int side = 1;
     public bool groundTouch;
 
-    void Awake() 
-    {
-        rb = GetComponent<Rigidbody2D>();
-        coll = GetComponent<Collision>();
-    }
-
     void Start()
     {
         canJump = true;
-        
+        rb = GetComponent<Rigidbody2D>();
+        coll = GetComponent<Collision>();
+        anim = GetComponent<AnimationScript>();
     }
 
     void Update()
@@ -57,7 +55,7 @@ public class PlayerMove : MonoBehaviour
         Vector2 dir = new Vector2(x,y);
 
         Walk(dir);
-
+        anim.SetHorizontalMovement(x, y, rb.linearVelocityY);
         
         // wallGrab = coll.onWall && Input.GetKey(KeyCode.LeftShift);
 
@@ -66,7 +64,8 @@ public class PlayerMove : MonoBehaviour
         // Se estiver colidindo com a parede e apertando botao de grab ele ativa o grab e para de deslizar na parede
         if(coll.onWall && Input.GetButton("Fire3") && canMove )
         {
-            // Debug.Log("Ativou wall grab");
+             if(side != coll.wallSide)
+                anim.Flip(side*-1);
             wallGrab = true;
             wallSlide = false;
             
@@ -136,6 +135,7 @@ public class PlayerMove : MonoBehaviour
 
         if (Input.GetButtonDown("Jump"))
         {
+            anim.SetTrigger("jump");
             if (coll.onGround && canJump){
                 Jump(Vector2.up, false);
             }
@@ -155,19 +155,20 @@ public class PlayerMove : MonoBehaviour
 
         // mexer com particulas, dash e outras coisas
 
-        if (wallGrab || wallSlide || !canMove){
+        if (wallGrab || wallSlide || !canMove)
+        {
             return;
         }
 
         if(x > 0)
         {
             side = 1;
-            // anim.Flip(side);
+            anim.Flip(side);
         }
         if (x < 0)
         {
             side = -1;
-            // anim.Flip(side);
+            anim.Flip(side);
         }
     }
 
@@ -176,7 +177,7 @@ public class PlayerMove : MonoBehaviour
         hasDashed = false;
         isDashing = false;
 
-        // side = anim.sr.flipX ? -1 : 1;
+        side = anim.spr.flipX ? -1 : 1;
 
         // jumpParticle.Play();
     }
@@ -210,6 +211,9 @@ public class PlayerMove : MonoBehaviour
 
     void WallSlide()
     {
+        if (coll.wallSide != side){
+            anim.Flip(side * -1);
+        }
         if (!canMove){
             return;
         }
@@ -230,7 +234,7 @@ public class PlayerMove : MonoBehaviour
         if ((side == 1 && coll.onRightWall) || side == -1 && !coll.onRightWall)
         {
             side *= -1;
-            // anim.Flip(side);
+            anim.Flip(side);
         }
 
         StopCoroutine(DisableMovement(0));
@@ -258,7 +262,7 @@ public class PlayerMove : MonoBehaviour
 
         hasDashed = true;
 
-        // anim.SetTrigger("dash");
+        anim.SetTrigger("dash");
 
         rb.linearVelocity = Vector2.zero;
         Vector2 dir = new Vector2(x, y);
@@ -277,16 +281,14 @@ public class PlayerMove : MonoBehaviour
         // rb.linearVelocityY = 0f;
         rb.gravityScale = 0;
         canJump = false;
-        // GetComponent<BetterJumping>().enabled = false;
         wallJumped = true;
         isDashing = true;
 
-        yield return new WaitForSeconds(.4f);
+        yield return new WaitForSeconds(dashWaitingTime);
 
         // dashParticle.Stop();
         rb.gravityScale = 3;
         canJump = true;
-        // GetComponent<BetterJumping>().enabled = true;
         wallJumped = false;
         isDashing = false;
     }
@@ -302,26 +304,4 @@ public class PlayerMove : MonoBehaviour
     {
         rb.linearDamping = x; // 
     }
-    /*
-    void OnCollisionEnter2D(Collision2D col)
-    {
-        if(col.gameObject.CompareTag("Floor"))
-        {
-            canJump = true;
-            Debug.Log(canJump);
-        }
-
-    }
-
-    
-    void OnCollisionExit2D(Collision2D col) 
-    {
-        if(col.gameObject.CompareTag("Floor"))
-        {
-            canJump = false;
-            Debug.Log(canJump);
-        }
-        
-    }
-    */
 }
